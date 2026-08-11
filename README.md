@@ -6,6 +6,7 @@
 [![Streamlit](https://img.shields.io/badge/Streamlit-App-red?logo=streamlit&logoColor=white)](https://streamlit.io/)
 [![Pillow](https://img.shields.io/badge/Pillow-Image%20Processing-green)](https://python-pillow.org/)
 [![QR Code](https://img.shields.io/badge/QR%20Code-Generator-black)](https://pypi.org/project/qrcode/)
+🚀 **[Live Demo](https://cwi-qr-code-generator.streamlit.app/)**
 
 A simple yet advanced QR Code Generator built with **Python**.
 
@@ -322,7 +323,7 @@ Used to create the web interface.
 
 ## 📸 Screenshots
 
-Screenshots of the Streamlit application will be added here after deployment.
+![QR Code Generator](deploy/screenshots/deploy-screenshot.png)
 
 ---
 
