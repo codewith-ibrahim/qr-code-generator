@@ -1,0 +1,578 @@
+# 📱 QR Code Generator Project — Complete Line by Line Explanation
+
+# Ye file aapke QR Code Generator project ki COMPLETE explanation hai.
+# Har line, har import, har function — sab kuch samjhaya gaya hai.
+# 3 Versions: Basic (basic.py) → Advanced Logic (generator.py) → CLI (cli.py)
+
+
+# ═══════════════════════════════════════════════
+# PROJECT OVERVIEW
+# ═══════════════════════════════════════════════
+
+# Ye project kya karta hai?
+# 1. Kisi bhi link/text ka QR Code generate karta hai
+# 2. QR Code ke beech mein LOGO lagata hai (Auto-detect ya Custom)
+# 3. QR Code ko user-defined file name se PNG save karta hai
+
+# Project Structure:
+# 📁 qr_code_project/
+# ├── basic.py           ← Simple version (No logo, no customization)
+# ├── generator.py       ← QR generation logic (Functions)
+# ├── cli.py             ← Command Line Interface (User interaction)
+# ├── logos/             ← Logo images folder
+# └── requirements.txt
+
+# Used Libraries:
+# 🔹 qrcode — QR Code generate karne ke liye
+# 🔹 PIL (Pillow) — Image processing ke liye
+# 🔹 requests — Favicon download ke liye
+# 🔹 os, io, urllib — Built-in (System operations)
+
+# Install Command:
+# pip install qrcode[pil] pillow requests
+
+
+# ═══════════════════════════════════════════════
+# FILE 1: basic.py — SIMPLE QR CODE
+# ═══════════════════════════════════════════════
+
+# Ye file SIMPLEST version hai — 2 lines mein QR Code!
+# No logo, no customization, no user input.
+
+# img = qrcode.make("https://www.linkedin.com/in/codewithibrahim")
+# Kya karta hai? → Direct QR Code image generate karta hai
+# qrcode.make() = Quick & Simple method
+# Parameter: Koi bhi text ya URL
+# Return: PIL Image object (Ready to save!)
+# ⚠️ Limitation: Customization NAHI kar sakte (color, size, logo, etc.)
+
+# img.save("linkedin_qr.png")
+# Kya karta hai? → Image ko FILE mein save karta hai
+# Parameter: File name (PNG, JPG, etc.)
+
+
+# ═══════════════════════════════════════════════
+# FILE 2: generator.py — QR GENERATION LOGIC
+# ═══════════════════════════════════════════════
+
+# Ye file PROJECT KA CORE hai!
+# Saari QR generation logic yahan hai.
+# 3 Functions hain — ek-ek karke samjhte hain.
+
+
+# ================================================
+# IMPORTS — LINE BY LINE
+# ================================================
+
+import qrcode
+# Kya hai? → Third-party library, QR Codes generate karne ke liye
+# Kahan se aaya? → pip install qrcode[pil]
+# Kya karta hai? → Text/Link ko QR Code image mein convert
+
+from PIL import Image, ImageDraw
+# Image → Images ko OPEN, CREATE, SAVE, MODIFY karna
+# ImageDraw → Images par DRAW/SHAPES banane ke liye
+# Yahan use: Logo load, resize, white circle draw, paste
+# PIL = Python Imaging Library (Pillow is modern fork)
+
+import os
+# Kya hai? → Built-in Python library (Operating System)
+# Kya karta hai? → File/Folder existence check
+# Yahan use: os.path.exists() — Check if logo file exists
+
+import requests
+# Kya hai? → Third-party library, HTTP requests ke liye
+# Kahan se aaya? → pip install requests
+# Kya karta hai? → Internet se data download karna
+# Yahan use: Website ka favicon download karna
+
+from io import BytesIO
+# Kya hai? → Built-in Python 'io' module ka class
+# Kya karta hai? → Binary data ko MEMORY mein store karta hai
+# Yahan use: Downloaded favicon bytes ko Image object mein convert
+# Memory mein file jaisa treat karta hai — disk par save nahi karna!
+
+from urllib.parse import urlparse
+# Kya hai? → Built-in Python 'urllib' module ka function
+# Kya karta hai? → URL ko PARSE (todna) karta hai
+# Yahan use: URL se domain name extract karna
+# Example: "https://github.com/ibrahim" → domain = "github.com"
+
+
+# ================================================
+# FUNCTION 1: auto_detect_logo()
+# ================================================
+
+def auto_detect_logo(url):
+    """URL ke accordign auto logo return karega."""
+
+    # Step 1: URL ko lowercase mein convert karo
+    url_lower = url.lower()
+    # Kya karta hai? → Case-insensitive matching ke liye
+    # "GitHub.com" → "github.com"
+    # Ab "github.com" match karega chahe user ne kaise bhi likha ho!
+
+    # Step 2: Logos dictionary
+    logos = {
+        "github.com" : "logos/github_logo.png",
+        "linkedin.com" : "logos/linkedin_logo.png",
+        "youtube.com" : "logos/youtube_logo.png",
+        "instagram.com" : "logos/instagram_logo.png",
+        "facebook.com" : "logos/facebook_logo.png",
+        "twitter.com" : "logos/twitter_logo.png",
+        "x.com" : "logos/x_logo.png"
+    }
+    # Kya hai? → Domain name → Logo file path mapping
+    # Dictionary kyun? → Easy to add new logos, no long if-else chain!
+    # Naya logo add karna: Bas ek line dictionary mein add karo!
+    # ⚠️ Logo files 'logos/' folder mein honi chahiye!
+
+    # Step 3: Domain match check
+    for domain, logo_path in logos.items():
+        if domain in url_lower:
+            return logo_path
+    # Kya ho raha hai? → Har domain check karo
+    # logos.items() → (key, value) pairs return karta hai
+    # "github.com" in "https://github.com/ibrahim" → True!
+    # First match milte hi return — aage check nahi karega!
+
+    # Step 4: No match
+    return None
+    # Agar koi domain match nahi hua to None return
+    # Baad mein download_favicon() try karega!
+
+
+# ================================================
+# FUNCTION 2: download_favicon()
+# ================================================
+
+def download_favicon(url):
+    """Website se favicon download karega agar available hoa to."""
+
+    try:
+        # Step 1: URL se domain extract karo
+        domain = urlparse(url).netloc
+        # urlparse() → URL ko parts mein todta hai
+        # "https://github.com/codewith-ibrahim"
+        # .netloc → "github.com" (Domain name!)
+        # .scheme → "https"
+        # .path → "/codewith-ibrahim"
+
+        # Step 2: Favicon URL banao
+        favicon_url = f"https://{domain}/favicon.ico"
+        # f-string se dynamic URL
+        # Example: "https://github.com/favicon.ico"
+        # ⚠️ .ico extension (Windows icon format)
+        # Alternative: Google's favicon service (Better!)
+
+        # Step 3: Download karo
+        response = requests.get(favicon_url, timeout=5)
+        # requests.get() → HTTP GET request bhejo
+        # timeout=5 → 5 seconds wait, phir error!
+        # response.status_code → 200 (OK), 404 (Not Found)
+
+        # Step 4: Success check + Image convert
+        if response.status_code == 200:
+            favicon = Image.open(BytesIO(response.content))
+            return favicon.convert("RGBA")
+        # BytesIO(response.content) → Bytes ko file-like object banata hai
+        # Image.open() → File-like object se image load
+        # .convert("RGBA") → Transparency support ke liye
+
+    except Exception:
+        pass  # Koi bhi error → Chup chaap None return
+
+    return None
+    # Download fail → None return
+    # QR Code bina logo ke generate hoga!
+
+
+# ================================================
+# FUNCTION 3: generate_qr() — MAIN FUNCTION
+# ================================================
+
+def generate_qr(url, logo_path=None, fill_color="black",
+                back_color="white", save_as="qr_code.png"):
+    """
+    QR Code generate karo with logo.
+
+    Parameters:
+    url = QR Code mein encode hone wala link
+    logo_path = Logo image ka path (None = auto-detect)
+    fill_color = QR Code ka color (Default: black)
+    back_color = Background color (Default: white)
+    save_as = File name to save (Default: qr_code.png)
+    """
+
+    # --- Step 1: Logo Decide Karo (Auto ya Manual) ---
+    if logo_path is None:
+        logo_path = auto_detect_logo(url)
+    # Agar user ne logo_path nahi diya (None) → Auto-detect!
+    # auto_detect_logo() URL dekhkar logo dhunde ga
+    # Mil gaya → logo_path mein file path
+    # Nahi mila → logo_path = None
+
+    # --- Step 2: QR Code Object Create ---
+    qr = qrcode.QRCode(
+        version=1,
+        error_correction=qrcode.constants.ERROR_CORRECT_H,
+        box_size=10,
+        border=4,
+    )
+    # version=1 → Small QR (21x21), URLs ke liye perfect
+    # ERROR_CORRECT_H → 30% damage recover! Logo lagane ke liye ZAROORI!
+    # box_size=10 → Har module 10 pixels
+    # border=4 → 4 modules ka white border (Standard)
+
+    # --- Step 3: Data Add + Generate ---
+    qr.add_data(url)
+    qr.make(fit=True)
+    # add_data() → URL/text QR mein encode karo
+    # make(fit=True) → Auto version adjust (agar data zyada ho)
+
+    # --- Step 4: QR Image Banao ---
+    img = qr.make_image(
+        fill_color=fill_color,
+        back_color=back_color
+    ).convert("RGBA")
+    # make_image() → QR code ko image mein convert
+    # .convert("RGBA") → Transparency channel add (Logo paste ke liye)
+
+    # --- Step 5: Logo Paste Karo (Agar Available) ---
+    if logo_path and os.path.exists(logo_path):
+        # PATH MILA + FILE EXISTS
+        logo = Image.open(logo_path).convert("RGBA")
+
+        qr_width, qr_height = img.size
+        logo_size = qr_width // 5  # Logo = 20% of QR size
+
+        # Logo resize
+        logo = logo.resize((logo_size, logo_size), Image.Resampling.LANCZOS)
+
+        # White circle behind logo (Clean look!)
+        circle_size = logo_size + 10
+        circle = Image.new("RGBA", (circle_size, circle_size), (0, 0, 0, 0))
+        draw = ImageDraw.Draw(circle)
+        draw.ellipse((0, 0, circle_size, circle_size), fill=(255, 255, 255, 255))
+
+        # Center calculations
+        circle_x = (qr_width - circle_size) // 2
+        circle_y = (qr_height - circle_size) // 2
+        logo_x = (qr_width - logo_size) // 2
+        logo_y = (qr_height - logo_size) // 2
+
+        # Paste
+        img.paste(circle, (circle_x, circle_y), circle)
+        img.paste(logo, (logo_x, logo_y), logo)
+
+        print(f"✅ Logo added: {logo_path}")
+
+    elif logo_path:
+        # PATH MILA BUT FILE DOESN'T EXIST
+        # Favicon download try karo
+        print("🔍 Auto-detecting logo...")
+        favicon = download_favicon(url)
+
+        if favicon:
+            # Same process with favicon
+            qr_width, qr_height = img.size
+            logo_size = qr_width // 5
+            favicon = favicon.resize((logo_size, logo_size), Image.Resampling.LANCZOS)
+
+            circle_size = logo_size + 10
+            circle = Image.new("RGBA", (circle_size, circle_size), (0, 0, 0, 0))
+            draw = ImageDraw.Draw(circle)
+            draw.ellipse((0, 0, circle_size, circle_size), fill=(255, 255, 255, 255))
+
+            circle_x = (qr_width - circle_size) // 2
+            circle_y = (qr_height - circle_size) // 2
+            logo_x = (qr_width - logo_size) // 2
+            logo_y = (qr_height - logo_size) // 2
+
+            img.paste(circle, (circle_x, circle_y), circle)
+            img.paste(favicon, (logo_x, logo_y), favicon)
+            print("✅ Favicon added as logo!")
+
+    # --- Step 6: Save Karo ---
+    img.save(save_as)
+    print(f"✅ QR Code saved as: {save_as}")
+
+    return save_as
+
+
+# ================================================
+# FILE 3: cli.py — COMMAND LINE INTERFACE
+# ================================================
+
+# Ye file USER SE INTERACTION karti hai.
+# generator.py ke functions ko CALL karti hai.
+
+from generator import generate_qr, auto_detect_logo
+# Apne hi project ke functions import!
+# generate_qr → QR generate karne ke liye
+# auto_detect_logo → Logo auto-detect ke liye
+
+import os
+# File existence check ke liye
+
+def main():
+    """User-friendly CLI for QR Code Generator."""
+
+    # Step 1: URL lo
+    url = input("\n🔗 Enter URL/Link: ").strip()
+    if not url:
+        print("❌ URL cannot be empty!")
+        return  # Empty URL → Function se bahar!
+
+    # Step 2: Logo option
+    print("\n🖼️  LOGO OPTIONS:")
+    print("1. Auto-detect (URL ke hisaab se)")
+    print("2. Custom logo file path")
+    print("3. No logo (Simple QR Code)")
+    # 3 options — User decide kare!
+
+    logo_choice = input("Choose (1/2/3): ").strip()
+    logo_path = None
+
+    if logo_choice == "1":
+        logo_path = auto_detect_logo(url)  # Auto-detect
+    elif logo_choice == "2":
+        logo_path = input("📁 Enter logo file path: ").strip()
+        if not os.path.exists(logo_path):
+            print(f"❌ File not found: {logo_path}")
+            logo_path = None  # Invalid path → No logo
+    # Choice 3 → logo_path stays None → No logo!
+
+    # Step 3: Color (Optional)
+    custom_color = input("\n🎨 Custom fill color? (Enter for black): ").strip()
+    fill_color = custom_color if custom_color else "black"
+    # Ternary operator: Value if condition else default
+
+    # Step 4: File name
+    default_name = "qr_code.png"
+    file_name = input(f"\n💾 File name? (Enter for '{default_name}'): ").strip()
+
+    if not file_name:
+        file_name = default_name
+    if not file_name.endswith(".png"):
+        file_name += ".png"  # Auto .png add!
+
+    # Step 5: Generate!
+    print("\n⏳ Generating QR Code...")
+    generate_qr(
+        url=url,
+        logo_path=logo_path,
+        fill_color=fill_color,
+        save_as=file_name
+    )
+
+    print(f"\n🎉 Done! Open '{file_name}' to see your QR Code.")
+
+if __name__ == "__main__":
+    main()
+# if __name__ == "__main__" → Sirf tab chale jab DIRECT run karo
+# Import kiya to nahi chalega!
+
+
+# ═══════════════════════════════════════════════
+# COMPLETE FLOW — USER PERSPECTIVE
+# ═══════════════════════════════════════════════
+
+# User cli.py run kare:
+# 1. URL enter kare (e.g., https://github.com/...)
+# 2. Logo option choose kare (1/2/3)
+# 3. Color customize kare (Optional)
+# 4. File name de (Optional)
+# 5. QR Code generate ho jaye!
+
+# Behind the scenes (generator.py):
+# 1. auto_detect_logo() → URL check, logo dhundo
+# 2. Agar nahi mila → download_favicon() → Website ka icon download
+# 3. generate_qr() → QR object create, data add, image banao
+# 4. Logo paste → White circle + Logo center mein
+# 5. Save → User ke diye naam se file save
+
+
+# ═══════════════════════════════════════════════
+# THREE VERSIONS COMPARISON
+# ═══════════════════════════════════════════════
+
+# basic.py — SIMPLE
+# ✅ 2 lines mein QR Code
+# ✅ Quick testing ke liye
+# ❌ No logo
+# ❌ No user input
+# ❌ No customization
+
+# generator.py — CORE LOGIC
+# ✅ Reusable functions
+# ✅ Auto-detect logo
+# ✅ Favicon download
+# ✅ Full customization
+# ✅ Error handling
+# ❌ Direct use nahi (CLI chahiye)
+
+# cli.py — USER INTERFACE
+# ✅ User-friendly
+# ✅ Step by step guidance
+# ✅ All options available
+# ✅ Default values (Enter press = Default)
+# ❌ Terminal based (GUI nahi)
+
+
+# ═══════════════════════════════════════════════
+# KEY CONCEPTS USED
+# ═══════════════════════════════════════════════
+
+# 1. QR Code
+#    → Quick Response Code, 2D barcode
+#    → Phone se scan → URL open!
+
+# 2. Error Correction (4 Levels)
+#    L(7%) → Simple QR
+#    M(15%) → Default
+#    Q(25%) → Quite High
+#    H(30%) → Logo ke saath MUST!
+
+# 3. RGBA Color Mode
+#    R, G, B, A = Red, Green, Blue, Alpha
+#    Alpha=0 (Transparent) → Alpha=255 (Solid)
+#    PNG files support transparency!
+
+# 4. BytesIO
+#    Binary data ko memory mein store
+#    Disk par file nahi banani → Fast!
+#    requests.get() ke response ko Image.open() se read
+
+# 5. urlparse()
+#    URL ko parts mein todna
+#    "https://github.com/user" → domain = "github.com"
+
+# 6. Floor Division (//)
+#    400 // 5 = 80 (Integer, no decimal)
+#    Pixel calculations ke liye perfect!
+
+# 7. Center Formula
+#    (Parent_Width - Child_Width) // 2
+#    Kisi bhi cheez ko center karne ka formula!
+
+# 8. Dictionary for Mapping
+#    domain → logo_path
+#    If-else chain se better — Scalable!
+
+
+# ═══════════════════════════════════════════════
+# POTENTIAL ERRORS & SOLUTIONS
+# ═══════════════════════════════════════════════
+
+# Error 1: ModuleNotFoundError
+# → pip install qrcode[pil] pillow requests
+
+# Error 2: logo_path file not found
+# → Check 'logos/' folder, file names match!
+
+# Error 3: QR Code scan nahi ho raha (Logo ke saath)
+# → ERROR_CORRECT_H use karo (Already hai!)
+# → Logo size 20% se zyada mat rakho
+
+# Error 4: 'dict' object has no attribute 'item'
+# → .items() likho, .item() nahi!
+
+# Error 5: favicon.ico vs favicon.io
+# → .ico (icon), .io nahi!
+
+# Error 6: Image.ANTIALIAS error
+# → Image.Resampling.LANCZOS use karo (Naya!)
+
+
+# ═══════════════════════════════════════════════
+# CUSTOMIZATION OPTIONS
+# ═══════════════════════════════════════════════
+
+# Colors:
+# fill_color="blue" | "#FF0000" | (0,255,0)
+# back_color="yellow"
+
+# Size:
+# box_size=20 (Bada) | box_size=5 (Chhota)
+
+# Version:
+# version=5 (Zyada data) | version=1 (URLs)
+
+# Border:
+# border=8 (Bada) | border=0 (No border)
+
+# Logo:
+# logos/ folder mein new logo add → Dictionary update!
+
+
+# ═══════════════════════════════════════════════
+# IMPROVEMENT IDEAS
+# ═══════════════════════════════════════════════
+
+# 1. GUI: Tkinter/PyQt se graphical interface
+# 2. Batch: Ek saath multiple QR codes
+# 3. Colors CLI: User se hex color input
+# 4. QR Reader: QR image se data read
+# 5. Web App: Flask/FastAPI se online version
+# 6. Download History: Generated QR codes ka log
+
+
+# ═══════════════════════════════════════════════
+# QUICK REFERENCE
+# ═══════════════════════════════════════════════
+
+# ┌──────────────────────────────────────────────────────┐
+# │ QR CODE GENERATOR — CHEAT SHEET                      │
+# ├──────────────────────────────────────────────────────┤
+# │ Simple:    qrcode.make("url")                        │
+# │ Advanced:  qrcode.QRCode(version=1, ...)             │
+# │ Auto Logo: auto_detect_logo(url)                     │
+# │ Favicon:   download_favicon(url)                     │
+# │ Generate:  generate_qr(url, logo, color, filename)   │
+# │ Save:      img.save("file.png")                      │
+# │ Center:    (parent - child) // 2                     │
+# │ Error:     ERROR_CORRECT_H (Logo!)                   │
+# │ Mode:      RGBA (Transparency)                       │
+# │ CLI:       python cli.py                             │
+# └──────────────────────────────────────────────────────┘
+
+
+# ═══════════════════════════════════════════════
+# FILE RESPONSIBILITIES SUMMARY
+# ═══════════════════════════════════════════════
+
+# basic.py:
+# ✅ Quick QR Code
+# ✅ No dependencies on other project files
+
+# generator.py:
+# ✅ All QR logic (Don't repeat code!)
+# ✅ 3 reusable functions
+# ✅ Import by cli.py (Single source of truth)
+
+# cli.py:
+# ✅ User interaction only
+# ✅ Calls generator.py functions
+# ✅ No QR logic (Separation of concerns)
+
+
+# ═══════════════════════════════════════════════
+# SUMMARY — WHAT YOU LEARNED
+# ═══════════════════════════════════════════════
+
+# ✅ QR Code generation (Simple + Advanced)
+# ✅ Image processing (PIL/Pillow)
+# ✅ Logo auto-detection from URL
+# ✅ Favicon downloading
+# ✅ Center alignment formula
+# ✅ RGBA color mode & transparency
+# ✅ Error correction levels
+# ✅ Drawing shapes on images
+# ✅ CLI building with user input
+# ✅ Code organization (Multiple files, functions)
+# ✅ Dictionary for scalable mapping
+# ✅ Professional project structure
+
+# Ye project PORTFOLIO ready hai!
+# Freelance ya job interview mein dikha sakte hain! 🚀
