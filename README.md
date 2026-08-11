@@ -323,7 +323,7 @@ Used to create the web interface.
 
 ## 📸 Screenshots
 
-![QR Code Generator](deploy_screenshots/deploy-screenshot.png)
+![QR Code Generator](deploy_screenshot/deploy-screenshot.png)
 
 ---
 
